@@ -1,11 +1,26 @@
 module Sandra
-  def included(model)
-    model.extend(ClassMethods)
+  def self.included(base)
+    base.extend(ClassMethods)
+    base.send(:define_method, :initialize) do |attrs|
+      @attributes = attrs
+    end
+  end
+
+  def method_missing(name, *args)
+    if name.to_s =~ /=\z/
+      @attributes[name.to_s] = args.first
+    else
+      @attributes[name.to_s] || super
+    end
   end
 
   module ClassMethods
+    def columns
+      @columns ||= []
+    end
+
     def establish_connection(options = {})
-      connection_options = YAML.load_file("#{RAILS_ROOT}/config/sandra.yml")[Rails.env].merge(options)
+      connection_options = YAML.load_file("#{::Rails.root.to_s}/config/sandra.yml")[Rails.env].merge(options)
       keyspace = connection_options["keyspace"]
       host = "#{connection_options["host"]}:#{connection_options["port"]}"
       @connection = Cassandra.new(keyspace, host)
@@ -16,7 +31,8 @@ module Sandra
     end
 
     def get(key)
-
+      hash = connection.get("User", key)
+      obj = self.new(hash)
     end
 
     def insert(key, columns = {})
@@ -30,6 +46,10 @@ module Sandra
     def create(columns = {})
       key = columns.delete(@key)
       insert(key, columns)
+    end
+
+    def column(name)
+      @columns << name
     end
   end
 end
