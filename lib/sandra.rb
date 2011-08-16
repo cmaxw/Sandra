@@ -1,22 +1,32 @@
+require 'active_model'
+require 'cassandra'
+
 module Sandra
   def self.included(base)
     base.extend(ClassMethods)
-    base.send(:define_method, :initialize) do |attrs|
-      @attributes = attrs
+    base.extend(ActiveModel::Naming)
+    base.class_eval do
+      include ActiveModel::Validations
+      include ActiveModel::Conversion
+      attr_accessor :attributes
+      def initialize(attrs = {})
+        @attributes = attrs
+      end
     end
   end
 
-  def method_missing(name, *args)
-    if name.to_s =~ /=\z/
-      @attributes[name.to_s] = args.first
-    else
-      @attributes[name.to_s] || super
-    end
+  def persisted?
+    false
   end
 
   module ClassMethods
-    def columns
-      @columns ||= []
+    def column(col_name)
+      define_method col_name do
+        attributes[col_name]
+      end
+      define_method "#{col_name}=" do |val|
+        attributes[col_name] = val
+      end
     end
 
     def establish_connection(options = {})
@@ -41,15 +51,14 @@ module Sandra
 
     def key_attribute(key)
       @key = key
+      validates_presence_of key
+      validates_uniqueness_of key
+      column key
     end
 
     def create(columns = {})
       key = columns.delete(@key)
       insert(key, columns)
-    end
-
-    def column(name)
-      @columns << name
     end
   end
 end

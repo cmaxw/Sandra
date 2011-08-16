@@ -8,6 +8,7 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://teachmetocode.com/}
   s.description = %q{Provides an Object Relational interface to Cassandra}
   s.add_dependency('cassandra')
+  s.add_dependency('activemodel')
   s.add_development_dependency('rspec')
   s.files = [ "README", 
               "MIT-LICENSE", 
