@@ -1,5 +1,6 @@
 require 'active_model'
 require 'cassandra'
+require 'sandra/key_validator'
 
 module Sandra
   def self.included(base)
@@ -8,24 +9,43 @@ module Sandra
     base.class_eval do
       include ActiveModel::Validations
       include ActiveModel::Conversion
-      attr_accessor :attributes
+      attr_accessor :attributes, :new_record
       def initialize(attrs = {})
-        @attributes = attrs
+        @attributes = attrs.stringify_keys
+        @new_record = true
       end
     end
+  end
+
+  def new_record?
+    new_record
   end
 
   def persisted?
     false
   end
 
+  def save
+    if valid?
+      attrs = attributes.dup
+      key = attrs.delete(self.class.key)
+      self.class.insert(key, attrs)
+      new_record = false
+      true
+    else
+      false
+    end
+  end
+
   module ClassMethods
     def column(col_name)
       define_method col_name do
-        attributes[col_name]
+        attr = col_name.to_s
+        attributes[attr]
       end
       define_method "#{col_name}=" do |val|
-        attributes[col_name] = val
+        attr = col_name.to_s
+        attributes[attr] = val
       end
     end
 
@@ -42,23 +62,34 @@ module Sandra
 
     def get(key)
       hash = connection.get("User", key)
-      obj = self.new(hash)
+      unless hash.empty?
+        obj = self.new(hash)
+        obj.username = key
+        obj.new_record = false
+        obj
+      else
+        nil
+      end
     end
 
     def insert(key, columns = {})
       connection.insert("User", key, columns)
     end
 
-    def key_attribute(key)
-      @key = key
-      validates_presence_of key
-      validates_uniqueness_of key
-      column key
+    def key_attribute(name)
+      @key = name
+      validates name, :presence => true, :key => true
+      column name
+    end
+
+    def key
+      @key
     end
 
     def create(columns = {})
-      key = columns.delete(@key)
-      insert(key, columns)
+      obj = self.new(columns)
+      obj.save
+      obj
     end
   end
 end
