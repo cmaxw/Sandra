@@ -1,6 +1,7 @@
 require 'active_model'
 require 'cassandra'
 require 'sandra/key_validator'
+require 'sandra/list'
 
 module Sandra
   def self.included(base)
@@ -17,6 +18,10 @@ module Sandra
         @new_record = true
       end
     end
+  end
+
+  def key
+    attributes[self.class.key.to_s]
   end
 
   def new_record?
@@ -107,6 +112,21 @@ module Sandra
       connection.get_range(self.to_s, options).map do |key, value|
         self.new_object(key, value)
       end
+    end
+
+    def list(name, type)
+      define_method name do
+        var_name = "@__#{name}_list"
+        unless instance_variable_get(var_name)
+          instance_variable_set(var_name, Sandra::List.new(name, type, self))
+        end
+        instance_variable_get(var_name)
+      end
+    end
+
+    def multi_get(keys)
+      collection = connection.multi_get(self.to_s, keys)
+      collection.map {|key, attrs| self.new_object(key, attrs) }
     end
   end
 end
