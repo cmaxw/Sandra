@@ -1,7 +1,7 @@
 require 'active_model'
 require 'cassandra'
-require 'sandra/key_validator'
-require 'sandra/list'
+require File.dirname(__FILE__) + '/sandra/key_validator'
+require File.dirname(__FILE__) + '/sandra/list'
 
 module Sandra
   def self.included(base)
