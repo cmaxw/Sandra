@@ -13,10 +13,16 @@ module Sandra
       include ActiveModel::Conversion
       define_model_callbacks :create, :update, :save, :destroy
       attr_accessor :attributes, :new_record
+
       def initialize(attrs = {})
         @attributes = attrs.stringify_keys
+        @unregistered_attrs = @attributes - self.class.registered_columns.map(&to_s)
+        @unregistered_attrs.each do |attr|
+          self.send("#{attr}=", @attributes[attr])
+        end
         @new_record = true
       end
+
     end
   end
 
@@ -59,6 +65,12 @@ module Sandra
         attr = col_name.to_s
         attributes[attr] = val
       end
+      @registered_columns ||= []
+      @registered_columns << col_name
+    end
+
+    def registered_columns
+      @registered_columns + Array(@key)
     end
 
     def establish_connection(options = {})
