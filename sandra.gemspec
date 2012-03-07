@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = %q{sandra}
-  s.version = "0.1.6"
+  s.version = "0.1.7"
   s.date = Time.now.strftime("%Y-%m-%d")
   s.authors = ["Charles Max Wood"]
   s.email = %q{chuck@teachmetocode.com}

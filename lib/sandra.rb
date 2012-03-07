@@ -24,7 +24,6 @@ module Sandra
         end
         @new_record = true
       end
-
     end
   end
 
@@ -115,6 +114,9 @@ module Sandra
       @key = name
       validates name, :presence => true, :key => true
       column name, type
+      define_method :to_param do
+        attributes[name.to_s]
+      end
     end
 
     def key
