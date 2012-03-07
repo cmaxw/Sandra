@@ -96,6 +96,10 @@ module Sandra
       end
     end
 
+    def find(key)
+      self.get(key)
+    end
+
     def new_object(key, attributes)
       obj = self.new(attributes)
       obj.send("#{@key}=", key)
