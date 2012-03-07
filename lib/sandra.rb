@@ -1,7 +1,7 @@
 require 'active_model'
 require 'cassandra'
-require 'sandra/key_validator'
-require 'sandra/list'
+require File.dirname(__FILE__) + '/sandra/key_validator'
+require File.dirname(__FILE__) + '/sandra/list'
 
 module Sandra
   def self.included(base)
@@ -11,6 +11,7 @@ module Sandra
     base.class_eval do
       include ActiveModel::Validations
       include ActiveModel::Conversion
+      include ActiveModel::SecurePassword
       define_model_callbacks :create, :update, :save, :destroy
       attr_accessor :attributes, :new_record
 
