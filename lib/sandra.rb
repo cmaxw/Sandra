@@ -17,9 +17,10 @@ module Sandra
 
       def initialize(attrs = {})
         @attributes = attrs.stringify_keys
-        @unregistered_attrs = @attributes - self.class.registered_columns.map(&to_s)
+        @unregistered_attrs = @attributes.keys - self.class.registered_columns.map(&:to_s)
         @unregistered_attrs.each do |attr|
           self.send("#{attr}=", @attributes[attr])
+          @attributes.delete(attr)
         end
         @new_record = true
       end
@@ -86,7 +87,8 @@ module Sandra
     end
 
     def get(key)
-      hash = connection.get(self.to_s, key)
+      return nil unless key
+      hash = connection.get(self.to_s, key.to_s)
       unless hash.empty?
         self.new_object(key, hash)
       else
