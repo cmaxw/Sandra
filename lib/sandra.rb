@@ -36,7 +36,7 @@ module Sandra
   end
 
   def persisted?
-    false
+    !new_record
   end
 
   def save
