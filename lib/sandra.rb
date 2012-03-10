@@ -44,7 +44,7 @@ module Sandra
     run_callbacks callback_target do
       run_callbacks :save do
         attrs = attributes.dup
-        key = attrs.delete(self.class.key)
+        key = attrs.delete(self.class.key.to_s)
         if key && valid?
           self.class.insert(key, attrs)
           new_record = false
